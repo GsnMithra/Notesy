@@ -5,7 +5,7 @@ import './globals.css'
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
-import {NextUIProvider} from "@nextui-org/react";
+import { NextUIProvider } from "@nextui-org/react";
 
 export const fontSans = Work_Sans({
   subsets: ["latin"],
