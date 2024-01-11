@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useRef, useState, useMemo, use } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
+import io from "socket.io-client"
 
-import { Popover, PopoverTrigger, PopoverContent, Slider } from "@nextui-org/react";
+import { Popover, PopoverTrigger, PopoverContent, Slider, Snippet, Tabs, Tab, Input } from "@nextui-org/react";
 import {
     Card, 
     CardHeader, 
@@ -42,7 +43,21 @@ function Board() {
     const [historyIndex, setHistoryIndex] = useState(-1)
 
     const strokeWidth = [1, 2.5, 4]
-    const eraserRadiusRange = [10, 20, 30, 40]
+
+    function generateRandomString(length: number = 7) {
+        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let result = "";
+    
+        for (let i = 0; i < length; i += 1) {
+            const randomIndex = Math.floor(Math.random() * characters.length);
+            result += characters.charAt(randomIndex);
+        }
+      
+        return result;
+    }
+
+    const [room, setRoom] = useState(generateRandomString())
+    const [currentRoom, setCurrentRoom] = useState(room)
 
     const colorsLight = useMemo(() => [
         "#ffffff",
@@ -108,6 +123,18 @@ function Board() {
             window.removeEventListener('mousemove', () => {})
         }
     }, [selected])
+
+    useEffect(() => {
+        const socket = io("http://localhost:8000");
+
+        socket.on ('connect', () => {
+            socket.emit('join-room', currentRoom);
+        })
+
+        return () => {
+            socket.disconnect()
+        }
+    }, [currentRoom])
 
     const eraserItems = (
         <PopoverContent className="ml-5 px-1 py-2 items-center justify-center w-32 p-3.5">
@@ -325,6 +352,27 @@ function Board() {
             {selected[2] && <div className="absolute" style={{pointerEvents: 'none', top: `${(eraserIndex.x - (eraserRadius * 2)) - (eraserRadius == 30 ? 2 : 0)}px`, left: `${(eraserIndex.y - (eraserRadius * 2)) - (eraserRadius == 30 ? 2 : 0)}px`}}>
                 <div className={`w-${eraserRadius !== 30 ? eraserRadius : "32"} h-${eraserRadius !== 30 ? eraserRadius : "32"} border-1 border-black rounded-full opacity-30 bg-white`}></div>
             </div>}
+
+            <div className="absolute top-5 right-5">
+                <Tabs aria-label="Options" radius="md">
+                    <Tab title="Create">
+                        <Card className="absolute top-12 right-1">
+                            <CardBody>
+                                <Snippet>{currentRoom}</Snippet>
+                            </CardBody>
+                        </Card>  
+                    </Tab>
+                    <Tab title="Join">
+                        <Card className="absolute top-12 right-1 w-52">
+                            <CardBody className="flex flex-row gap-3 items-center justify-center">
+                                <Input placeholder={"Paste room ID"}/>
+                                <Button isIconOnly color="primary" variant="flat" onPress={() => setCurrentRoom(room)}>Go</Button>
+                            </CardBody>
+                        </Card>
+                    </Tab>
+                </Tabs>
+            </div>
+
             <Card className="w-15 absolute left-5 top-5 border-1">
                 <CardHeader className="flex gap-3">
                     <div className="flex flex-col">

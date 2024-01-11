@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "server": "node server.js"
   },
   "dependencies": {
     "@nextui-org/button": "^2.0.26",
@@ -23,6 +24,8 @@
     "next-themes": "^0.2.1",
     "react": "^18",
     "react-dom": "^18",
+    "socket.io": "^4.7.3",
+    "socket.io-client": "^4.7.3",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7"
   },
