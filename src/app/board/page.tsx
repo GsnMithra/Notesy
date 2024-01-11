@@ -12,7 +12,6 @@ import {
 } from "@nextui-org/react";
 
 import Image from "next/image";
-import { useTheme } from "next-themes";
 
 import Pen from "../../../public/pen.png"
 import Eraser from "../../../public/eraser.png"
@@ -23,20 +22,33 @@ import EraserLight from "../../../public/eraser-light.png"
 import PointerLight from "../../../public/pointer-light.png"
 
 function Board() {
-    const { theme } = useTheme()
+    const theme = "dark";
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const contextRef = useRef<CanvasRenderingContext2D | null>(null)
     const [selected, setSelected] = useState([true, false, false]);
     const [isDrawing, setIsDrawing] = useState(false)
     const lastPoint = useRef<{ x: number; y: number } | null>(null);
-    const [color, setColor] = useState(theme === "dark" ? "white" : "black")
     
-    const colors = useMemo(() => [
+    const strokeWidth = [1, 2.5, 4]
+
+    const colorsLight = useMemo(() => [
         "#ffffff",
         "#e9fff9",
         "#9cc4b2",
         "#d64045",
         "#cfee9e",
+        "#aa4465",
+        "#499167",
+        "#accbe1",
+        "#9cc4b2",
+    ], []);
+
+    const colorsDark = useMemo(() => [
+        "#1a1a1a",
+        "#2d2d2d",
+        "#4c4c4c",
+        "#7c7c7c",
+        "#d64045",
         "#aa4465",
         "#499167",
         "#accbe1",
@@ -70,37 +82,59 @@ function Board() {
         context.lineCap = "round";
         context.lineJoin = "round";
         context.lineWidth = 3;
-        context.strokeStyle = color;
         contextRef.current = context;
-    }, [color])
+    }, [])
 
     const colorMenu = (
         <PopoverContent>
             <div className="px-1 py-2">
                 <div>Colors</div>
-                <div className="inline-grid grid-cols-3 gap-2 pt-2">
-                    {colors.map((color, index) => (
-                        <div key={index}>
-                        <div></div>
-                            <Button
-                                className="border-1"
-                                isIconOnly
-                                style={{backgroundColor: color}}
-                                onPress={() => handleColorChange(color)}
-                                >
-                            </Button>
-                        </div>
-                    ))}
+                <div className="flex flex-row gap-1">
+                    <div className="inline-grid grid-cols-3 gap-2 pt-2">
+                        {(theme === "dark" ? colorsDark : colorsLight).map((color, index) => (
+                            <div key={index}>
+                            <div></div>
+                                <Button
+                                    className="border-1"
+                                    isIconOnly
+                                    style={{backgroundColor: color}}
+                                    onPress={() => handleColorChange(color)}
+                                    >
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                    <Divider orientation="vertical" className="bg-auto invert h-30 m-3"/>
+                    <div className="flex flex-col gap-[13.5px] pt-2">
+                        {strokeWidth.map((value, index) => (
+                            <div key={index}>
+                            <div></div>
+                                <Button
+                                    className="border-1"
+                                    isIconOnly
+                                    color="primary"
+                                    onPress={() => handleStrokeChange(value * 2)}
+                                    >
+                                        <div className={`h-${0.5 * (index + 1)} w-6 bg-current rounded-xl`}></div>
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </PopoverContent>
     );
 
+    const handleStrokeChange = (stroke: number) => {
+        contextRef.current?.closePath();
+        contextRef.current?.beginPath();
+        contextRef.current!.lineWidth = stroke;
+    }
+
     const handleColorChange = (color: string) => {
         contextRef.current?.closePath();
         contextRef.current?.beginPath();
         contextRef.current!.strokeStyle = color;
-        setColor(color)
     }
 
     const startDrawing = ({nativeEvent}: any) => {
@@ -171,20 +205,20 @@ function Board() {
                 <Divider/>
                 <CardBody className="flex flex-col gap-3 items-center justify-center">
                     <Button isIconOnly aria-label="Pointer" color="primary" variant={!selected[0] ? "flat" : undefined} onPress={() => handleButtonPress(0)} className="relative w-14">
-                        <Image src={!selected[0] ? PointerLight : Pointer} alt="Pointer" height={20}/>
+                        <Image src={selected[0] ? PointerLight : Pointer} alt="Pointer" height={20}/>
                         <div className="absolute bottom-0.5 right-1 text-[10px]">Esc</div>
                     </Button>
                     <Popover placement="right" color="primary">
                         <PopoverTrigger onClick={() => handleButtonPress(1)}>
                             <Button isIconOnly aria-label="Pen" color="primary" variant={!selected[1] ? "flat" : undefined} className="relative w-14">
-                                <Image src={!selected[1] ? PenLight : Pen} alt="Pen" height={20}/>
+                                <Image src={selected[1] ? PenLight : Pen} alt="Pen" height={20}/>
                                 <div className="absolute bottom-0.5 right-2 text-[10px]">P</div>
                             </Button>
                         </PopoverTrigger>
                         {colorMenu}
                     </Popover>
                     <Button isIconOnly aria-label="Eraser" color="primary" variant={!selected[2] ? "flat" : undefined} onPress={() => handleButtonPress(2)} className="relative w-14">
-                        <Image src={!selected[2] ? EraserLight : Eraser} alt="Eraser" height={20}/>
+                        <Image src={selected[2] ? EraserLight : Eraser} alt="Eraser" height={20}/>
                         <div className="absolute bottom-0.5 right-2 text-[10px]">E</div>
                     </Button>
                 </CardBody>
