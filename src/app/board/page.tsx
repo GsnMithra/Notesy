@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState, useMemo } from "react"
-import io from "socket.io-client"
+import { useEffect, useRef, useState, useMemo, use } from "react"
+import { Socket, io } from "socket.io-client"
 
 import { Popover, PopoverTrigger, PopoverContent, Slider, Snippet, Tabs, Tab, Input } from "@nextui-org/react";
 import {
@@ -58,6 +58,8 @@ function Board() {
 
     const [room, setRoom] = useState(generateRandomString())
     const [currentRoom, setCurrentRoom] = useState(room)
+    const [newRoomId, setNewRoomId] = useState("")
+    const [socket, setSocket] = useState<Socket | null>(null)
 
     const colorsLight = useMemo(() => [
         "#ffffff",
@@ -82,6 +84,62 @@ function Board() {
         "#accbe1",
         "#9cc4b2",
     ], []);
+
+    // useEffect(() => {
+    //     if (socket) {
+    //         socket.on("draw", (data) => {
+    //             console.log(data)
+    //         })
+    //     }
+    // }, [socket])
+
+    useEffect(() => {
+        console.log("room changed")
+        const socket = io("http://localhost:8000")
+
+        socket?.on("connect", () => {
+            socket?.emit("join-room", currentRoom)
+        })
+
+        socket?.on("draw", (data) => {
+            const { offsetX, offsetY, lastPoint, color, strokeSize } = data
+            if (contextRef.current)
+                contextRef.current.strokeStyle = color;
+            contextRef.current!.lineWidth = strokeSize;
+            contextRef.current?.quadraticCurveTo(
+                lastPoint.x,
+                lastPoint.y,
+                (lastPoint.x + offsetX) / 2,
+                (lastPoint.y + offsetY) / 2
+            );
+            contextRef.current?.stroke();
+
+            contextRef.current?.beginPath();
+            contextRef.current?.moveTo((lastPoint.x + offsetX) / 2, (lastPoint.y + offsetY) / 2);
+            lastPoint.current = { x: offsetX, y: offsetY };
+
+            const canvas = canvasRef.current;
+            if (canvas) {
+                const { width, height } = canvas.getBoundingClientRect();
+                if (offsetX > width || offsetY > height) {
+                    canvas.width = width * 2;
+                    canvas.height = height * 2;
+                    canvas.style.width = `${width}px`;
+                    canvas.style.height = `${height}px`;
+                    contextRef.current?.scale(2, 2);
+                }
+            }
+
+            contextRef.current?.closePath();
+        })
+
+        setSocket(socket)
+        
+        return () => {
+            socket?.disconnect()
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentRoom])
 
     useEffect(() => {
         window.addEventListener('keydown', (e) => {
@@ -123,18 +181,6 @@ function Board() {
             window.removeEventListener('mousemove', () => {})
         }
     }, [selected])
-
-    useEffect(() => {
-        const socket = io("http://localhost:8000");
-
-        socket.on ('connect', () => {
-            socket.emit('join-room', currentRoom);
-        })
-
-        return () => {
-            socket.disconnect()
-        }
-    }, [currentRoom])
 
     const eraserItems = (
         <PopoverContent className="ml-5 px-1 py-2 items-center justify-center w-32 p-3.5">
@@ -245,19 +291,17 @@ function Board() {
     }
 
     const finishDrawing = () => {
-        contextRef.current?.closePath();
         setIsDrawing(false)
+        contextRef.current?.closePath();
         lastPoint.current = null;
     }
 
     const draw = ({nativeEvent}: any) => {
-        if (selected[0])
-            return;
+        if (selected[0]) return;
 
         const { offsetX, offsetY } = nativeEvent;
         
-        if (lastPoint.current == null)
-            return;
+        if (lastPoint.current == null) return;
 
         if (selected[2]) {
             eraseWithContinuousDots(offsetX, offsetY);
@@ -286,6 +330,15 @@ function Board() {
                     contextRef.current?.scale(2, 2);
                 }
             }
+
+            socket?.emit("draw", {
+                offsetX,
+                offsetY,
+                lastPoint: lastPoint.current,
+                color: selectedColor,
+                strokeSize: selectedStroke,
+                room: currentRoom
+            })
         }
     }
 
@@ -365,8 +418,8 @@ function Board() {
                     <Tab title="Join">
                         <Card className="absolute top-12 right-1 w-52">
                             <CardBody className="flex flex-row gap-3 items-center justify-center">
-                                <Input placeholder={"Paste room ID"}/>
-                                <Button isIconOnly color="primary" variant="flat" onPress={() => setCurrentRoom(room)}>Go</Button>
+                                <Input placeholder={"Paste room ID"} value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)}/>
+                                <Button isIconOnly color="primary" variant="flat" onPress={() => setCurrentRoom(newRoomId)}>Go</Button>
                             </CardBody>
                         </Card>
                     </Tab>

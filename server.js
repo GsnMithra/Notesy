@@ -4,19 +4,22 @@ const { Server } = require('socket.io');
 const server = http.createServer();
 const io = new Server(server, {
     cors: {
-        origin: 'http://localhost:3000',
+        origin: '*',
         methods: ['GET', 'POST']
     }
 });
-
 
 io.on('connection', (socket) => {
     console.log("New client connected: " + socket.id);
     
     socket.on('join-room', (room) => {
         socket.join(room);
-        console.log("Joined room: " + room);
-        io.to(room).emit('roomJoined', `User joined room: ${room}`)
+        io.to(room).emit('room-joined', `User joined room: ${room}`)
+    })
+
+    socket.on('draw', (data) => {
+        console.log(data)
+        io.to(data.room).emit('draw', data);
     })
 
     socket.on('disconnect', () => {
@@ -25,5 +28,5 @@ io.on('connection', (socket) => {
 });
 
 server.listen(8000, () => {
-    console.log('listening on *:8000');
+    console.log('running on port: 8000');
 })
