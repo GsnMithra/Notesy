@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo, use } from "react"
 
-import { Popover, PopoverTrigger, PopoverContent } from "@nextui-org/react";
+import { Popover, PopoverTrigger, PopoverContent, Slider } from "@nextui-org/react";
 import {
     Card, 
     CardHeader, 
@@ -42,6 +42,7 @@ function Board() {
     const [historyIndex, setHistoryIndex] = useState(-1)
 
     const strokeWidth = [1, 2.5, 4]
+    const eraserRadiusRange = [10, 20, 30, 40]
 
     const colorsLight = useMemo(() => [
         "#ffffff",
@@ -108,6 +109,22 @@ function Board() {
         }
     }, [selected])
 
+    const eraserItems = (
+        <PopoverContent className="ml-5 px-1 py-2 items-center justify-center w-32 p-3.5">
+            <Slider
+                label="Radius:" 
+                step={10} 
+                maxValue={40} 
+                minValue={10} 
+                defaultValue={20}
+                className="max-w-md"
+                color="secondary"
+                value={eraserRadius}
+                onChange={(value) => setEraserRadius(value as number)}
+            />
+        </PopoverContent>
+    )
+
     const colorMenu = (
         <PopoverContent className="ml-5">
             <div className="px-1 py-2">
@@ -122,6 +139,7 @@ function Board() {
                                     style={{backgroundColor: color}}
                                     variant={selectedColor === color ? "faded" : undefined}
                                     onPress={() => handleColorChange(color)}
+                                    color="secondary"
                                     >
                                 </Button>
                             </div>
@@ -138,7 +156,7 @@ function Board() {
                                     onPress={() => handleStrokeChange(value * 2)}
                                     variant={selectedStroke === value * 2 ? "faded" : undefined}
                                     >
-                                        <div className={`h-${0.5 * (index + 1)} w-6 bg-current rounded-xl`}></div>
+                                        <div className={`h-${0.5 * (index + 2)} w-6 bg-current rounded-xl`}></div>
                                 </Button>
                             </div>
                         ))}
@@ -288,10 +306,24 @@ function Board() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    useEffect(() => {
+        if (selected[2]) {
+            const updatedTop = `${eraserIndex.x - (eraserRadius * 2)}px`;
+            const updatedLeft = `${eraserIndex.y - (eraserRadius * 2)}px`;
+
+            const eraserElement = document.getElementById('eraserElement');
+            if (eraserElement) {
+                eraserElement.style.top = updatedTop;
+                eraserElement.style.left = updatedLeft;
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [eraserRadius])
+
     return (
         <main className={`flex flex-row h-max w-max items-center justify-center p-0 ${dotted ? "bg-dotted" : ""}`}>
-            {selected[2] && <div className="absolute" style={{pointerEvents: 'none', top: `${(eraserIndex.x - (eraserRadius * 2))}px`, left: `${(eraserIndex.y - (eraserRadius * 2))}px`}}>
-                <div className="w-20 h-20 border-1 border-black rounded-full opacity-30 bg-white"></div>
+            {selected[2] && <div className="absolute" style={{pointerEvents: 'none', top: `${(eraserIndex.x - (eraserRadius * 2)) - (eraserRadius == 30 ? 2 : 0)}px`, left: `${(eraserIndex.y - (eraserRadius * 2)) - (eraserRadius == 30 ? 2 : 0)}px`}}>
+                <div className={`w-${eraserRadius !== 30 ? eraserRadius : "32"} h-${eraserRadius !== 30 ? eraserRadius : "32"} border-1 border-black rounded-full opacity-30 bg-white`}></div>
             </div>}
             <Card className="w-15 absolute left-5 top-5 border-1">
                 <CardHeader className="flex gap-3">
@@ -314,10 +346,15 @@ function Board() {
                         </PopoverTrigger>
                         {colorMenu}
                     </Popover>
-                    <Button isIconOnly aria-label="Eraser" color="primary" variant={!selected[2] ? "flat" : undefined} onPress={() => handleButtonPress(2)} className="relative w-14">
-                        <Image src={!selected[2] ? EraserLight : Eraser} alt="Eraser" height={20}/>
-                        <div className="absolute bottom-0.5 right-2 text-[8.5px]">E</div>
-                    </Button>
+                    <Popover placement="right-start" color="primary">
+                        <PopoverTrigger onClick={() => handleButtonPress(2)}>
+                            <Button isIconOnly aria-label="Eraser" color="primary" variant={!selected[2] ? "flat" : undefined} onPress={() => handleButtonPress(2)} className="relative w-14">
+                                <Image src={!selected[2] ? EraserLight : Eraser} alt="Eraser" height={20}/>
+                                <div className="absolute bottom-0.5 right-2 text-[8.5px]">E</div>
+                            </Button>
+                        </PopoverTrigger>
+                        {eraserItems}
+                    </Popover>
                 </CardBody>
             </Card>
             <div className="absolute bottom-5 left-5">
