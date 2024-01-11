@@ -22,7 +22,7 @@ export default function RootLayout({
       <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
         <NextUIProvider>
           <ThemeProvider
-            attribute="classs"
+            attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
