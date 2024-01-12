@@ -146,7 +146,7 @@ function Board() {
     }, [currentRoom])
 
     useEffect(() => {
-        setTimeout (() => {
+        const initializeCanvas = () => {
             window.addEventListener('keydown', (e) => {
                 if (e.key === "Escape") 
                     setSelected([true, false, false])
@@ -154,7 +154,7 @@ function Board() {
                     setSelected([false, true, false])
                 else if (e.key === "e")
                     setSelected([false, false, true])
-            })
+            });
     
             const canvas = canvasRef.current;
             if (canvas == null)
@@ -174,8 +174,14 @@ function Board() {
             context.lineJoin = "round";
             context.lineWidth = 3;
             contextRef.current = context;
-        }, 1000)
-    }, [])
+        };
+    
+        const initializationTimeout = setTimeout(() => {
+            initializeCanvas();
+        }, 500);
+    
+        return () => clearTimeout(initializationTimeout);
+    }, [])    
 
     useEffect(() => {
         window.addEventListener('mousemove', (e) => {
