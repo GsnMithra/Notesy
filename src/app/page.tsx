@@ -12,8 +12,8 @@ import {
 } from "@nextui-org/react";
 import Image from "next/image";
 
-import { auth } from "./firebase";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { auth, googleProvider, githubProvider, twitterProvider } from "./firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useRouter } from "next/navigation";
@@ -57,6 +57,29 @@ export default function Home() {
 
     await login(u, p);
   };
+
+  const providerSignIn = async (provider: any) => {
+    signInWithPopup(auth, provider).then((result) => {
+      const credential = provider.credentialFromResult(result);
+      const token = credential?.accessToken;
+      const user = result.user;
+      setAlertTitle("Success");
+      setAlertDetails("Logged in successfully");
+      setShowAlert(true);
+      setTimeout(() => {
+        router.push("/board");
+        setShowAlert(false);
+      }, 1000)
+    }).catch((error) => {
+      const errorMessage = error.message;
+      setAlertTitle("Error");
+      setAlertDetails(errorMessage);
+      setShowAlert(true);
+      setTimeout(() => {
+        setShowAlert(false);
+      }, 3500)
+    })
+  }
 
   const login = async (e: string, p: string) => {
     setLoading(true);
@@ -181,7 +204,10 @@ export default function Home() {
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
             <div className="flex flex-row gap-3 mt-3 mb-3">
-              <Button variant="flat" onPress={() => handleSignIn(email, password, confirmPassword)} isLoading={loading ? true : false}>
+              <Button variant="flat" onPress={() => setModeSignIn(false)}>
+                Back
+              </Button>
+              <Button color="primary" onPress={() => handleSignIn(email, password, confirmPassword)} isLoading={loading ? true : false}>
                 Create Account
               </Button>
             </div>
@@ -256,7 +282,7 @@ export default function Home() {
                 Sign up
               </Button>
               <Button
-                variant="flat"
+                color="primary"
                 onPress={() => handleLoginButton(email, password)}
                 isLoading={loading ? true : false}
               >
@@ -271,6 +297,8 @@ export default function Home() {
               color="primary"
               isIconOnly
               style={{ height: "60px", width: "60px" }}
+              className="flex items-center justify-center"
+              onPress={() => {providerSignIn(googleProvider)}}
             >
               <Image
                 src="https://authjs.dev/img/providers/google.svg"
@@ -284,10 +312,12 @@ export default function Home() {
               color="primary"
               isIconOnly
               style={{ height: "60px", width: "60px" }}
+              className="flex items-center justify-center"
+              onPress={() => {providerSignIn(githubProvider)}}
             >
               <Image
                 src="https://authjs.dev/img/providers/github.svg"
-                alt="Facebook"
+                alt="Github"
                 height={40}
                 width={40}
               />
@@ -297,10 +327,12 @@ export default function Home() {
               color="primary"
               isIconOnly
               style={{ height: "60px", width: "60px" }}
+              className="flex items-center justify-center"
+              onPress={() => {providerSignIn(twitterProvider)}}
             >
               <Image
                 src="https://authjs.dev/img/providers/twitter.svg"
-                alt="Github"
+                alt="Twitter"
                 height={40}
                 width={40}
               />

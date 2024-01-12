@@ -5,7 +5,7 @@ import { Socket, io } from "socket.io-client"
 
 import { auth } from "../firebase";
 
-import { Popover, PopoverTrigger, PopoverContent, Slider, Snippet, Tabs, Tab, Input, Avatar, Spinner } from "@nextui-org/react";
+import { Popover, PopoverTrigger, PopoverContent, Slider, Snippet, Tabs, Tab, Input, Spinner } from "@nextui-org/react";
 import {
     Card, 
     CardHeader, 
@@ -29,16 +29,19 @@ import Redo from "../../../public/redo.png"
 import UndoLight from "../../../public/undo-light.png"
 import RedoLight from "../../../public/redo-light.png"
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function Board() {
     const theme = "dark";
     const [user, setUser] = useState<any>(null)
+    const [avatar, setAvatar] = useState<any>("")
     const router = useRouter();
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
             if (user) {
                 setUser(user);
+                setAvatar(user.photoURL);
             } else {
                 setUser(null);
                 router.push("/")
@@ -422,10 +425,29 @@ function Board() {
 
     return (
         <main className={`flex flex-row h-max w-max items-center justify-center p-0 ${dotted ? "bg-dotted" : ""}`}>
-            {/* <Avatar src={} /> */}
-            {selected[2] && <div className="absolute" style={{pointerEvents: 'none', top: `${(eraserIndex.x - (eraserRadius * 2)) - (eraserRadius == 30 ? 2 : 0)}px`, left: `${(eraserIndex.y - (eraserRadius * 2)) - (eraserRadius == 30 ? 2 : 0)}px`}}>
-                <div className={`w-${eraserRadius !== 30 ? eraserRadius : "32"} h-${eraserRadius !== 30 ? eraserRadius : "32"} border-1 border-black rounded-full opacity-30 bg-white`}></div>
-            </div>}
+            <Avatar className="absolute bottom-5 right-5">
+                <AvatarImage src={avatar} alt="" />
+                <AvatarFallback>{auth.currentUser?.email?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            {selected[2] && (
+                <div className="absolute" style={{
+                    pointerEvents: 'none',
+                    top: `${eraserIndex.x - (eraserRadius * 4) / 2}px`,
+                    left: `${eraserIndex.y - (eraserRadius * 4) / 2}px`,
+                }}>
+                    <div
+                        style={{
+                            width: `${eraserRadius * 4}px`,
+                            height: `${eraserRadius * 4}px`,
+                            border: '1px solid black',
+                            borderRadius: '50%',
+                            opacity: 0.3,
+                            backgroundColor: 'white',
+                        }}
+                    ></div>
+                </div>
+            )}
+
 
             <div className="absolute top-5 right-5">
                 <Tabs aria-label="Options" radius="md">
