@@ -22,6 +22,14 @@ io.on('connection', (socket) => {
         io.to(data.room).emit('draw', data);
     })
 
+    socket.on('begin-draw', (data) => {
+        io.to(data.room).emit('begin-draw', data);
+    })
+
+    socket.on('end-draw', () => {
+        io.to(room).emit('end-draw');
+    })
+
     socket.on('disconnect', () => {
         console.log('Client disconnected: ' + socket.id);
     })

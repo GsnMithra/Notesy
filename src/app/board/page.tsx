@@ -1,9 +1,11 @@
 "use client"
 
-import { useEffect, useRef, useState, useMemo, use } from "react"
+import { useEffect, useRef, useState, useMemo } from "react"
 import { Socket, io } from "socket.io-client"
 
-import { Popover, PopoverTrigger, PopoverContent, Slider, Snippet, Tabs, Tab, Input } from "@nextui-org/react";
+import { auth } from "../firebase";
+
+import { Popover, PopoverTrigger, PopoverContent, Slider, Snippet, Tabs, Tab, Input, Avatar, Spinner } from "@nextui-org/react";
 import {
     Card, 
     CardHeader, 
@@ -26,9 +28,25 @@ import Undo from "../../../public/undo.png"
 import Redo from "../../../public/redo.png"
 import UndoLight from "../../../public/undo-light.png"
 import RedoLight from "../../../public/redo-light.png"
+import { useRouter } from "next/navigation";
 
 function Board() {
     const theme = "dark";
+    const [user, setUser] = useState<any>(null)
+    const router = useRouter();
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            if (user) {
+                setUser(user);
+            } else {
+                setUser(null);
+                router.push("/")
+            }
+        });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const contextRef = useRef<CanvasRenderingContext2D | null>(null)
     const [selected, setSelected] = useState([true, false, false])
@@ -85,16 +103,7 @@ function Board() {
         "#9cc4b2",
     ], []);
 
-    // useEffect(() => {
-    //     if (socket) {
-    //         socket.on("draw", (data) => {
-    //             console.log(data)
-    //         })
-    //     }
-    // }, [socket])
-
     useEffect(() => {
-        console.log("room changed")
         const socket = io("http://localhost:8000")
 
         socket?.on("connect", () => {
@@ -114,8 +123,6 @@ function Board() {
             );
             contextRef.current?.stroke();
 
-            contextRef.current?.beginPath();
-            contextRef.current?.moveTo((lastPoint.x + offsetX) / 2, (lastPoint.y + offsetY) / 2);
             lastPoint.current = { x: offsetX, y: offsetY };
 
             const canvas = canvasRef.current;
@@ -129,8 +136,6 @@ function Board() {
                     contextRef.current?.scale(2, 2);
                 }
             }
-
-            contextRef.current?.closePath();
         })
 
         setSocket(socket)
@@ -138,37 +143,38 @@ function Board() {
         return () => {
             socket?.disconnect()
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentRoom])
 
     useEffect(() => {
-        window.addEventListener('keydown', (e) => {
-            if (e.key === "Escape") 
-                setSelected([true, false, false])
-            else if (e.key === "p")
-                setSelected([false, true, false])
-            else if (e.key === "e")
-                setSelected([false, false, true])
-        })
-
-        const canvas = canvasRef.current;
-        if (canvas == null)
-            return;
-
-        canvas.width = window.innerWidth * 2;
-        canvas.height = window.innerHeight * 2;
-        canvas.style.width = `${window.innerWidth}px`;
-        canvas.style.height = `${window.innerHeight}px`;
-
-        const context = canvas.getContext("2d");
-        if (context == null)
-            return;
-        
-        context.scale(2, 2);
-        context.lineCap = "round";
-        context.lineJoin = "round";
-        context.lineWidth = 3;
-        contextRef.current = context;
+        setTimeout (() => {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === "Escape") 
+                    setSelected([true, false, false])
+                else if (e.key === "p")
+                    setSelected([false, true, false])
+                else if (e.key === "e")
+                    setSelected([false, false, true])
+            })
+    
+            const canvas = canvasRef.current;
+            if (canvas == null)
+                return;
+    
+            canvas.width = window.innerWidth * 2;
+            canvas.height = window.innerHeight * 2;
+            canvas.style.width = `${window.innerWidth}px`;
+            canvas.style.height = `${window.innerHeight}px`;
+    
+            const context = canvas.getContext("2d");
+            if (context == null)
+                return;
+            
+            context.scale(2, 2);
+            context.lineCap = "round";
+            context.lineJoin = "round";
+            context.lineWidth = 3;
+            contextRef.current = context;
+        }, 1000)
     }, [])
 
     useEffect(() => {
@@ -204,7 +210,7 @@ function Board() {
                 <div>Colors</div>
                 <div className="flex flex-row gap-1">
                     <div className="inline-grid grid-cols-3 gap-2 pt-2">
-                        {(theme === "dark" ? colorsLight : colorsDark).map((color, index) => (
+                        {(theme === "dark" ? colorsDark : colorsLight).map((color, index) => (
                             <div key={index}>
                             <div></div>
                                 <Button
@@ -400,8 +406,17 @@ function Board() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [eraserRadius])
 
+    if (!user) {
+        return (
+            <main className={`flex h-screen w-screen items-center justify-center ${dotted ? "bg-dotted" : ""}`}>
+                <Spinner size="lg" />
+            </main>
+        )
+    }
+
     return (
         <main className={`flex flex-row h-max w-max items-center justify-center p-0 ${dotted ? "bg-dotted" : ""}`}>
+            {/* <Avatar src={} /> */}
             {selected[2] && <div className="absolute" style={{pointerEvents: 'none', top: `${(eraserIndex.x - (eraserRadius * 2)) - (eraserRadius == 30 ? 2 : 0)}px`, left: `${(eraserIndex.y - (eraserRadius * 2)) - (eraserRadius == 30 ? 2 : 0)}px`}}>
                 <div className={`w-${eraserRadius !== 30 ? eraserRadius : "32"} h-${eraserRadius !== 30 ? eraserRadius : "32"} border-1 border-black rounded-full opacity-30 bg-white`}></div>
             </div>}
@@ -435,13 +450,13 @@ function Board() {
                 <Divider/>
                 <CardBody className="flex flex-col gap-3 items-center justify-center">
                     <Button isIconOnly aria-label="Pointer" color="primary" variant={!selected[0] ? "flat" : undefined} onPress={() => handleButtonPress(0)} className="relative w-14">
-                        <Image src={!selected[0] ? PointerLight : Pointer} alt="Pointer" height={20}/>
+                        <Image src={selected[0] ? PointerLight : Pointer} alt="Pointer" height={20}/>
                         <div className="absolute bottom-0.5 right-1 text-[8.5px]">Esc</div>
                     </Button>
                     <Popover placement="right-start" color="primary">
                         <PopoverTrigger onClick={() => handleButtonPress(1)}>
                             <Button isIconOnly aria-label="Pen" color="primary" variant={!selected[1] ? "flat" : undefined} className="relative w-14">
-                                <Image src={!selected[1] ? PenLight : Pen} alt="Pen" height={20}/>
+                                <Image src={selected[1] ? PenLight : Pen} alt="Pen" height={20}/>
                                 <div className="absolute bottom-0.5 right-2 text-[8.5px]">P</div>
                             </Button>
                         </PopoverTrigger>
@@ -450,7 +465,7 @@ function Board() {
                     <Popover placement="right-start" color="primary">
                         <PopoverTrigger onClick={() => handleButtonPress(2)}>
                             <Button isIconOnly aria-label="Eraser" color="primary" variant={!selected[2] ? "flat" : undefined} onPress={() => handleButtonPress(2)} className="relative w-14">
-                                <Image src={!selected[2] ? EraserLight : Eraser} alt="Eraser" height={20}/>
+                                <Image src={selected[2] ? EraserLight : Eraser} alt="Eraser" height={20}/>
                                 <div className="absolute bottom-0.5 right-2 text-[8.5px]">E</div>
                             </Button>
                         </PopoverTrigger>
@@ -460,10 +475,10 @@ function Board() {
             </Card>
             <div className="absolute bottom-5 left-5">
                 <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined} onClick={undo}>
-                    <Image src={UndoLight} alt="Undo" height={20}/>
+                    <Image src={Undo} alt="Undo" height={20}/>
                 </Button>
                 <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined} onClick={redo}>
-                    <Image src={RedoLight} alt="Undo" height={20}/>
+                    <Image src={Redo} alt="Undo" height={20}/>
                 </Button>
             </div>
             <canvas
