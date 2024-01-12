@@ -30,12 +30,31 @@ import UndoLight from "../../../public/undo-light.png"
 import RedoLight from "../../../public/redo-light.png"
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTheme } from "next-themes";
 
 function Board() {
-    const theme = "dark";
+    let theme = useTheme().theme;
+    if (theme === 'system')
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+    console.log(theme)
     const [user, setUser] = useState<any>(null)
     const [avatar, setAvatar] = useState<any>("")
     const router = useRouter();
+
+    const getModeItems = (item: string, selected: boolean) => {
+        const itemMap = {
+            "pen": [Pen, PenLight],
+            "eraser": [Eraser, EraserLight],
+            "pointer": [Pointer, PointerLight],
+            "undo": [Undo, UndoLight],
+            "redo": [Redo, RedoLight]
+        }
+
+        if (theme === "dark")
+            return itemMap[item as keyof typeof itemMap][selected ? 0 : 1]
+        return itemMap[item as keyof typeof itemMap][selected ? 1 : 0]
+    }
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -50,6 +69,7 @@ function Board() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    const [darkMode, setDarkMode] = useState(theme === "dark" ? true : false)
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const contextRef = useRef<CanvasRenderingContext2D | null>(null)
     const [selected, setSelected] = useState([true, false, false])
@@ -219,7 +239,7 @@ function Board() {
                 <div>Colors</div>
                 <div className="flex flex-row gap-1">
                     <div className="inline-grid grid-cols-3 gap-2 pt-2">
-                        {(theme === "dark" ? colorsDark : colorsLight).map((color, index) => (
+                        {(theme === "dark" ? colorsLight : colorsDark).map((color, index) => (
                             <div key={index}>
                             <div></div>
                                 <Button
@@ -441,13 +461,11 @@ function Board() {
                             height: `${eraserRadius * 4}px`,
                             border: '1px solid black',
                             borderRadius: '50%',
-                            opacity: 0.3,
-                            backgroundColor: 'white',
+                            opacity: 0.2,
                         }}
                     ></div>
                 </div>
             )}
-
 
             <div className="absolute top-5 right-5">
                 <Tabs aria-label="Options" radius="md">
@@ -478,13 +496,13 @@ function Board() {
                 <Divider/>
                 <CardBody className="flex flex-col gap-3 items-center justify-center">
                     <Button isIconOnly aria-label="Pointer" color="primary" variant={!selected[0] ? "flat" : undefined} onPress={() => handleButtonPress(0)} className="relative w-14">
-                        <Image src={selected[0] ? PointerLight : Pointer} alt="Pointer" height={20}/>
+                        <Image src={getModeItems("pointer", selected[0])} alt="Pointer" height={20}/>
                         <div className="absolute bottom-0.5 right-1 text-[8.5px]">Esc</div>
                     </Button>
                     <Popover placement="right-start" color="primary">
                         <PopoverTrigger onClick={() => handleButtonPress(1)}>
                             <Button isIconOnly aria-label="Pen" color="primary" variant={!selected[1] ? "flat" : undefined} className="relative w-14">
-                                <Image src={selected[1] ? PenLight : Pen} alt="Pen" height={20}/>
+                                <Image src={getModeItems("pen", selected[1])} alt="Pen" height={20}/>
                                 <div className="absolute bottom-0.5 right-2 text-[8.5px]">P</div>
                             </Button>
                         </PopoverTrigger>
@@ -493,7 +511,7 @@ function Board() {
                     <Popover placement="right-start" color="primary">
                         <PopoverTrigger onClick={() => handleButtonPress(2)}>
                             <Button isIconOnly aria-label="Eraser" color="primary" variant={!selected[2] ? "flat" : undefined} onPress={() => handleButtonPress(2)} className="relative w-14">
-                                <Image src={selected[2] ? EraserLight : Eraser} alt="Eraser" height={20}/>
+                                <Image src={getModeItems("eraser", selected[2])} alt="Eraser" height={20}/>
                                 <div className="absolute bottom-0.5 right-2 text-[8.5px]">E</div>
                             </Button>
                         </PopoverTrigger>
@@ -503,10 +521,10 @@ function Board() {
             </Card>
             <div className="absolute bottom-5 left-5">
                 <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined} onClick={undo}>
-                    <Image src={Undo} alt="Undo" height={20}/>
+                    <Image src={theme === "light" ? Undo : UndoLight} alt="Undo" height={20}/>
                 </Button>
                 <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined} onClick={redo}>
-                    <Image src={Redo} alt="Undo" height={20}/>
+                    <Image src={theme === "light" ? Redo : RedoLight} alt="Undo" height={20}/>
                 </Button>
             </div>
             <canvas
