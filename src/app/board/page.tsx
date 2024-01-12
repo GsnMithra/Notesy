@@ -16,22 +16,21 @@ import {
 
 import Image from "next/image";
 
-import Pen from "../../../public/pen.png"
-import Eraser from "../../../public/eraser.png"
-import Pointer from "../../../public/pointer.png"
+import Pen from "@/app/pen.png"
+import Eraser from "@/app/eraser.png"
+import Pointer from "@/app/pointer.png"
 
-import PenLight from "../../../public/pen-light.png"
-import EraserLight from "../../../public/eraser-light.png"
-import PointerLight from "../../../public/pointer-light.png"
+import PenLight from "@/app/pen-light.png"
+import EraserLight from "@/app/eraser-light.png"
+import PointerLight from "@/app/pointer-light.png"
 
-import Undo from "../../../public/undo.png"
-import Redo from "../../../public/redo.png"
-import UndoLight from "../../../public/undo-light.png"
-import RedoLight from "../../../public/redo-light.png"
+import Undo from "@/app/undo.png"
+import Redo from "@/app/redo.png"
+import UndoLight from "@/app/undo-light.png"
+import RedoLight from "@/app/redo-light.png"
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
-import { Label } from "@radix-ui/react-dropdown-menu";
 
 function Board() {
     let theme = useTheme().theme;
