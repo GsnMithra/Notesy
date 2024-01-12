@@ -10,29 +10,21 @@ const io = new Server(server, {
 });
 
 io.on('connection', (socket) => {
-    console.log("New client connected: " + socket.id);
+    console.log("New noʊtsi connected: " + socket.id);
     
-    socket.on('join-room', (room) => {
+    socket.on('join-room', (info) => {
+        const room = info.room;
         socket.join(room);
         io.to(room).emit('room-joined', `User joined room: ${room}`)
-    })
+    });
 
     socket.on('draw', (data) => {
-        console.log(data)
         io.to(data.room).emit('draw', data);
-    })
-
-    socket.on('begin-draw', (data) => {
-        io.to(data.room).emit('begin-draw', data);
-    })
-
-    socket.on('end-draw', () => {
-        io.to(room).emit('end-draw');
     })
 
     socket.on('disconnect', () => {
         console.log('Client disconnected: ' + socket.id);
-    })
+    });
 });
 
 server.listen(8000, () => {

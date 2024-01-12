@@ -51,6 +51,7 @@ export default function Home() {
       setShowAlert(true);
       setTimeout(() => {
         setShowAlert(false);
+        setLoading(false);
       }, 3500);
       return;
     }
@@ -69,6 +70,7 @@ export default function Home() {
       setTimeout(() => {
         router.push("/board");
         setShowAlert(false);
+        setLoading(false);
       }, 1000)
     }).catch((error) => {
       const errorMessage = error.message;
@@ -77,6 +79,7 @@ export default function Home() {
       setShowAlert(true);
       setTimeout(() => {
         setShowAlert(false);
+        setLoading(false);
       }, 3500)
     })
   }
@@ -92,6 +95,7 @@ export default function Home() {
         setTimeout(() => {
           router.push("/board");
           setShowAlert(false);
+          setLoading(false);
         }, 1000)
       })
       .catch((error) => {
@@ -102,6 +106,7 @@ export default function Home() {
         setShowAlert(true);
         setTimeout(() => {
           setShowAlert(false);
+          setLoading(false);
         }, 3500)
       });
   }
@@ -131,6 +136,7 @@ export default function Home() {
         setShowAlert(true);
         setTimeout(() => {
           setShowAlert(false);
+          setLoading(false);
         }, 3500)
       });
   }
@@ -142,6 +148,7 @@ export default function Home() {
       setShowAlert(true);
       setTimeout(() => {
         setShowAlert(false);
+        setLoading(false);
       }, 3500);
       return;
     }
@@ -152,6 +159,7 @@ export default function Home() {
       setShowAlert(true);
       setTimeout(() => {
         setShowAlert(false);
+        setLoading(false);
       }, 3500);
       return;
     }

@@ -5,7 +5,7 @@ import { Socket, io } from "socket.io-client"
 
 import { auth } from "../firebase";
 
-import { Popover, PopoverTrigger, PopoverContent, Slider, Snippet, Tabs, Tab, Input, Spinner } from "@nextui-org/react";
+import { Popover, PopoverTrigger, PopoverContent, Slider, Snippet, Tabs, Tab, Input, Spinner, User } from "@nextui-org/react";
 import {
     Card, 
     CardHeader, 
@@ -31,13 +31,13 @@ import RedoLight from "../../../public/redo-light.png"
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
+import { Label } from "@radix-ui/react-dropdown-menu";
 
 function Board() {
     let theme = useTheme().theme;
     if (theme === 'system')
         theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
-    console.log(theme)
     const [user, setUser] = useState<any>(null)
     const [avatar, setAvatar] = useState<any>("")
     const router = useRouter();
@@ -82,6 +82,8 @@ function Board() {
     const [eraserIndex, setEraserIndex] = useState({x: 0, y: 0})
     const [drawingHistory, setDrawingHistory] = useState<any[]>([])
     const [historyIndex, setHistoryIndex] = useState(-1)
+    const [roomSize, setRoomSize] = useState(1)
+    const [usernames, setUsernames] = useState([]);
 
     const strokeWidth = [1, 2.5, 4]
 
@@ -130,7 +132,7 @@ function Board() {
         const socket = io("http://localhost:8000")
 
         socket?.on("connect", () => {
-            socket?.emit("join-room", currentRoom)
+            socket?.emit("join-room", { room: currentRoom })
         })
 
         socket?.on("draw", (data) => {
@@ -201,7 +203,7 @@ function Board() {
     
         const initializationTimeout = setTimeout(() => {
             initializeCanvas();
-        }, 500);
+        }, 1000);
     
         return () => clearTimeout(initializationTimeout);
     }, [])    
@@ -443,30 +445,57 @@ function Board() {
         )
     }
 
+    const AvatarContent = (
+        <PopoverContent className="p-3">
+            <User
+                name={auth.currentUser?.displayName || "Anonymous"}
+                description={auth.currentUser?.email || "@anonymous"}
+                avatarProps={{ src: avatar, alt: "" }}
+            />
+
+            <Divider className="my-2 m-5"/>
+            Room size: {roomSize}
+            {usernames?.map((username, index) => (
+                <div key={index}>{username}</div>
+            ))}
+            <Divider className="my-2 m-5"/>
+
+            <Button
+                color="primary"
+                onClick={() => auth.signOut()}
+            >
+                Sign Out
+            </Button>
+        </PopoverContent>
+      )
+
     return (
         <main className={`flex flex-row h-max w-max items-center justify-center p-0 ${dotted ? "bg-dotted" : ""}`}>
-            <Avatar className="absolute bottom-5 right-5">
-                <AvatarImage src={avatar} alt="" />
-                <AvatarFallback>{auth.currentUser?.email?.charAt(0)}</AvatarFallback>
-            </Avatar>
+            <Popover placement="top-end">
+                <PopoverTrigger>
+                    <Avatar className="absolute bottom-5 right-5 cursor-pointer">
+                        <AvatarImage src={avatar} alt="" />
+                        <AvatarFallback>{auth.currentUser?.email?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                </PopoverTrigger>
+                    {AvatarContent}
+            </Popover>
             {selected[2] && (
                 <div className="absolute" style={{
                     pointerEvents: 'none',
                     top: `${eraserIndex.x - (eraserRadius * 4) / 2}px`,
                     left: `${eraserIndex.y - (eraserRadius * 4) / 2}px`,
                 }}>
-                    <div
-                        style={{
+                    <div style={{
                             width: `${eraserRadius * 4}px`,
                             height: `${eraserRadius * 4}px`,
-                            border: '1px solid black',
+                            border: '1px solid bg-white',
                             borderRadius: '50%',
                             opacity: 0.2,
                         }}
                     ></div>
                 </div>
             )}
-
             <div className="absolute top-5 right-5">
                 <Tabs aria-label="Options" radius="md">
                     <Tab title="Create">
@@ -480,7 +509,11 @@ function Board() {
                         <Card className="absolute top-12 right-1 w-52">
                             <CardBody className="flex flex-row gap-3 items-center justify-center">
                                 <Input placeholder={"Paste room ID"} value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)}/>
-                                <Button isIconOnly color="primary" variant="flat" onPress={() => setCurrentRoom(newRoomId)}>Go</Button>
+                                <Button isIconOnly color="primary" variant="flat" onPress={() => {
+                                    if (newRoomId === "")
+                                        return;
+                                    setCurrentRoom(newRoomId)
+                                }}>Go</Button>
                             </CardBody>
                         </Card>
                     </Tab>
