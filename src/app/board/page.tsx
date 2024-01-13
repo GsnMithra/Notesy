@@ -135,26 +135,45 @@ function Board() {
         })
 
         socket?.on("begin-drawing", (data) => {
-            const { clientX, clientY } = data;
-            setIsDrawing(true);
-            contextRef.current?.beginPath();
-            contextRef.current?.moveTo(clientX, clientY);
-            lastPoint.current = { x: clientX, y: clientY };
+            const { clientX, clientY, eventType } = data;
+
+            if (eventType === 'draw') {
+                setIsDrawing(true);
+                contextRef.current?.beginPath();
+                contextRef.current?.moveTo(clientX, clientY);
+                lastPoint.current = { x: clientX, y: clientY };
+            } else if (eventType === 'erase') {
+                setIsDrawing(true);
+                lastPoint.current = { x: clientX, y: clientY };
+                const saveRadius = eraserRadius;
+                setEraserRadius(data.eraserRadius);
+                eraseWithContinuousDots(clientX, clientY, data.eraserRadius);
+                setEraserRadius(saveRadius);
+            }
         });
 
         socket?.on("draw", (data) => {
-            const { offsetX, offsetY, lastPoint, color, strokeSize } = data
-            if (contextRef.current)
-                contextRef.current.strokeStyle = color;
-            contextRef.current!.lineWidth = strokeSize;
-            contextRef.current?.quadraticCurveTo(
-                lastPoint.x,
-                lastPoint.y,
-                (lastPoint.x + offsetX) / 2,
-                (lastPoint.y + offsetY) / 2
-            );
-            contextRef.current?.stroke();
-            contextRef.current?.moveTo((lastPoint.current?.x + offsetX) / 2, (lastPoint.current?.y + offsetY) / 2);
+            if (data.eventType === 'draw') {
+                const { offsetX, offsetY, lastPoint, color, strokeSize } = data
+                if (contextRef.current)
+                    contextRef.current.strokeStyle = color;
+                contextRef.current!.lineWidth = strokeSize;
+                contextRef.current?.quadraticCurveTo(
+                    lastPoint.x,
+                    lastPoint.y,
+                    (lastPoint.x + offsetX) / 2,
+                    (lastPoint.y + offsetY) / 2
+                );
+                contextRef.current?.stroke();
+                contextRef.current?.moveTo((lastPoint.current?.x + offsetX) / 2, (lastPoint.current?.y + offsetY) / 2);
+            } else if (data.eventType === 'erase') {
+                const { clientX, clientY, lastPoint } = data;
+                const saveRadius = eraserRadius;
+                setEraserRadius(data.eraserRadius);
+                eraseWithContinuousDots(clientX, clientY, data.eraserRadius);
+                setEraserRadius(saveRadius);
+                lastPoint.current = { x: clientX, y: clientY };
+            }
         })
 
         socket?.on("finish-drawing", (data) => {
@@ -275,8 +294,7 @@ function Board() {
         </PopoverContent>
     );
 
-    const eraseWithContinuousDots = (x: number, y: number) => {
-        const radius = eraserRadius;
+    const eraseWithContinuousDots = (x: number, y: number, radius: number) => {
         if (contextRef.current)
             contextRef.current.globalCompositeOperation = "destination-out";
 
@@ -316,7 +334,9 @@ function Board() {
         socket?.emit('begin-drawing', {
             room: currentRoom,
             clientX,
-            clientY
+            clientY,
+            eventType: selected[1] ? 'draw' : 'erase',
+            eraserRadius
         })
 
         if (selected[1]) {
@@ -327,7 +347,7 @@ function Board() {
         } else if (selected[2]) {
             setIsDrawing(true)
             lastPoint.current = { x: clientX, y: clientY };
-            eraseWithContinuousDots(clientX, clientY);
+            eraseWithContinuousDots(clientX, clientY, eraserRadius);
         }
     }
 
@@ -350,8 +370,20 @@ function Board() {
         if (lastPoint.current == null) return;
     
         if (selected[2]) {
-            eraseWithContinuousDots(clientX, clientY);
+            eraseWithContinuousDots(clientX, clientY, eraserRadius);
             lastPoint.current = { x: clientX, y: clientY };
+
+            socket?.emit("draw", {
+                clientX,
+                clientY,
+                lastPoint: lastPoint.current,
+                color: selectedColor,
+                strokeSize: selectedStroke,
+                room: currentRoom,
+                eventType: 'erase',
+                eraserRadius
+            });
+
         } else if (selected[1]) {
             const newPoint = { x: (lastPoint.current.x + clientX) / 2, y: (lastPoint.current.y + clientY) / 2 };
     
@@ -362,6 +394,7 @@ function Board() {
                 color: selectedColor,
                 strokeSize: selectedStroke,
                 room: currentRoom,
+                eventType: 'draw'
             });
     
             contextRef.current?.quadraticCurveTo(
@@ -415,7 +448,7 @@ function Board() {
                     );
                     contextRef.current?.stroke();
                 } else if (action.type === 'erase') {
-                    eraseWithContinuousDots(action.x, action.y);
+                    eraseWithContinuousDots(action.x, action.y, eraserRadius);
                 }
             });
         }
