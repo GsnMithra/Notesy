@@ -79,10 +79,7 @@ function Board() {
     const [eraserRadius, setEraserRadius] = useState(20)
     const [dotted, setDotted] = useState(true)
     const [eraserIndex, setEraserIndex] = useState({ x: 0, y: 0 })
-    const [drawingHistory, setDrawingHistory] = useState<any[]>([])
-    const [historyIndex, setHistoryIndex] = useState(-1)
-    const [roomSize, setRoomSize] = useState(1)
-    const [usernames, setUsernames] = useState([]);
+    const [pointerMap, setPointerMap] = useState<any>({})
 
     const strokeWidth = [1, 2.5, 4]
 
@@ -153,7 +150,12 @@ function Board() {
         });
 
         socket?.on("draw", (data) => {
-            if (data.eventType === 'draw') {
+            if (data.eventType === 'clientPointer') {
+                const { clientX, clientY, username } = data;
+                setPointerMap((prev: any) => {
+                    return { ...prev, [username]: { x: clientX, y: clientY } }
+                })
+            } else if (data.eventType === 'draw') {
                 const { offsetX, offsetY, lastPoint, color, strokeSize } = data
                 if (contextRef.current)
                     contextRef.current.strokeStyle = color;
@@ -310,8 +312,6 @@ function Board() {
 
         if (contextRef.current)
             contextRef.current.globalCompositeOperation = "source-over";
-
-        pushToHistory({ type: 'erase', x, y });
     };
 
     const handleStrokeChange = (stroke: number) => {
@@ -363,7 +363,22 @@ function Board() {
     }
 
     const draw = ({ nativeEvent }: any) => {
-        if (selected[0]) return;
+
+        let name = auth.currentUser?.displayName || "Anonymous";
+        let displayName = name.split(" ");
+
+        if (selected[0] || selected[1] || selected[2]) {
+            socket?.emit('draw', {
+                clientX: nativeEvent.clientX,
+                clientY: nativeEvent.clientY,
+                room: currentRoom,
+                username: displayName[displayName.length - 1],
+                eventType: 'clientPointer'
+            })
+
+            if (selected[0])
+                return;
+        };
     
         const { clientX, clientY } = nativeEvent;
     
@@ -373,7 +388,7 @@ function Board() {
             eraseWithContinuousDots(clientX, clientY, eraserRadius);
             lastPoint.current = { x: clientX, y: clientY };
 
-            socket?.emit("draw", {
+            socket?.emit('draw', {
                 clientX,
                 clientY,
                 lastPoint: lastPoint.current,
@@ -416,44 +431,6 @@ function Board() {
         newSelected[index] = true;
         setSelected(newSelected);
     }
-
-    const pushToHistory = (action: any) => {
-        const newHistory = drawingHistory.slice(0, historyIndex + 1);
-        newHistory.push(action);
-        setDrawingHistory(newHistory);
-        setHistoryIndex(newHistory.length - 1);
-    };
-
-    const undo = () => {
-        if (historyIndex > 0)
-            setHistoryIndex((prevIndex) => prevIndex - 1);
-    };
-
-    const redo = () => {
-        if (historyIndex < drawingHistory.length - 1)
-            setHistoryIndex((prevIndex) => prevIndex + 1);
-    };
-
-    useEffect(() => {
-        if (contextRef.current) {
-            contextRef.current.clearRect(0, 0, window.innerWidth * 2, window.innerHeight * 2);
-            drawingHistory.forEach((action) => {
-                if (action.type === 'draw') {
-                    const { offsetX, offsetY } = action;
-                    contextRef.current?.quadraticCurveTo(
-                        action.lastPoint.x,
-                        action.lastPoint.y,
-                        (action.lastPoint.x + offsetX) / 2,
-                        (action.lastPoint.y + offsetY) / 2
-                    );
-                    contextRef.current?.stroke();
-                } else if (action.type === 'erase') {
-                    eraseWithContinuousDots(action.x, action.y, eraserRadius);
-                }
-            });
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     useEffect(() => {
         if (selected[2]) {
@@ -528,6 +505,30 @@ function Board() {
                     ></div>
                 </div>
             )}
+            {Object.keys(pointerMap).map((username, indices) => (
+                <div key={indices} className="absolute" style={{
+                    pointerEvents: 'none',
+                    left: `${pointerMap[username].x - 10}px`,
+                    top: `${pointerMap[username].y - 10}px`,
+                }}>
+                    <div className="flex items-center justify-center ml-2 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-3 h-3">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 19.5-15-15m0 0v11.25m0-11.25h11.25" />
+                        </svg>
+                        <div className="text-[12.5px] mt-4 ml-0">
+                            {username}
+                        </div>
+                    </div>
+                    <div style={{
+                        width: '20px',
+                        height: '20px',
+                        border: '1px solid bg-white',
+                        borderRadius: '50%',
+                        opacity: 0.2,
+                    }}
+                    ></div>
+                </div>
+            ))}
             <div className="absolute top-5 right-5">
                 <Tabs aria-label="Options" radius="md">
                     <Tab title="Create">
@@ -585,10 +586,10 @@ function Board() {
                 </CardBody>
             </Card>
             <div className="absolute bottom-5 left-5">
-                <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined} onClick={undo}>
+                <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined}>
                     <Image src={theme === "light" ? Undo : UndoLight} alt="Undo" height={20} />
                 </Button>
-                <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined} onClick={redo}>
+                <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined}>
                     <Image src={theme === "light" ? Redo : RedoLight} alt="Undo" height={20} />
                 </Button>
             </div>
