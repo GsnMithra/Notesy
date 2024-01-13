@@ -134,6 +134,14 @@ function Board() {
             socket?.emit("join-room", { room: currentRoom })
         })
 
+        socket?.on("begin-drawing", (data) => {
+            const { clientX, clientY } = data;
+            setIsDrawing(true);
+            contextRef.current?.beginPath();
+            contextRef.current?.moveTo(clientX, clientY);
+            lastPoint.current = { x: clientX, y: clientY };
+        });
+
         socket?.on("draw", (data) => {
             const { offsetX, offsetY, lastPoint, color, strokeSize } = data
             if (contextRef.current)
@@ -146,20 +154,13 @@ function Board() {
                 (lastPoint.y + offsetY) / 2
             );
             contextRef.current?.stroke();
-            contextRef.current?.beginPath();
             contextRef.current?.moveTo((lastPoint.current?.x + offsetX) / 2, (lastPoint.current?.y + offsetY) / 2);
+        })
 
-            const canvas = canvasRef.current;
-            if (canvas) {
-                const { width, height } = canvas.getBoundingClientRect();
-                if (offsetX > width || offsetY > height) {
-                    canvas.width = width * 2;
-                    canvas.height = height * 2;
-                    canvas.style.width = `${width}px`;
-                    canvas.style.height = `${height}px`;
-                    contextRef.current?.scale(2, 2);
-                }
-            }
+        socket?.on("finish-drawing", (data) => {
+            setIsDrawing(false)
+            contextRef.current?.closePath();
+            lastPoint.current = null;
         })
 
         setSocket(socket)
@@ -196,7 +197,7 @@ function Board() {
             context.scale(2, 2);
             context.lineCap = "round";
             context.lineJoin = "round";
-            context.lineWidth = 3;
+            context.lineWidth = 1 * 2;
             contextRef.current = context;
         };
 
@@ -209,14 +210,13 @@ function Board() {
 
     useEffect(() => {
         window.addEventListener('mousemove', (e) => {
-            if (selected[2])
-                setEraserIndex({ x: e.clientY, y: e.clientX })
-        })
+            if (selected[2]) setEraserIndex({ x: e.clientY, y: e.clientX });
+        });
 
         return () => {
-            window.removeEventListener('mousemove', () => { })
-        }
-    }, [selected])
+            window.removeEventListener('mousemove', () => { });
+        };
+    }, [selected]);
 
     const eraserItems = (
         <PopoverContent className="ml-5 px-1 py-2 items-center justify-center w-32 p-3.5">
@@ -311,22 +311,32 @@ function Board() {
     }
 
     const startDrawing = ({ nativeEvent }: any) => {
-        const { offsetX, offsetY } = nativeEvent;
+        const { clientX, clientY } = nativeEvent;
+
+        socket?.emit('begin-drawing', {
+            room: currentRoom,
+            clientX,
+            clientY
+        })
+
         if (selected[1]) {
             setIsDrawing(true)
             contextRef.current?.beginPath();
-            contextRef.current?.moveTo(offsetX, offsetY);
-            lastPoint.current = { x: offsetX, y: offsetY };
+            contextRef.current?.moveTo(clientX, clientY);
+            lastPoint.current = { x: clientX, y: clientY };
         } else if (selected[2]) {
             setIsDrawing(true)
-            lastPoint.current = { x: offsetX, y: offsetY };
-            eraseWithContinuousDots(offsetX, offsetY);
+            lastPoint.current = { x: clientX, y: clientY };
+            eraseWithContinuousDots(clientX, clientY);
         }
-
-        pushToHistory({ type: 'draw', lastPoint: { x: offsetX, y: offsetY } });
     }
 
     const finishDrawing = () => {
+        socket?.emit('finish-drawing', {
+            room: currentRoom,
+            lastPoint: lastPoint.current
+        });
+
         setIsDrawing(false)
         contextRef.current?.closePath();
         lastPoint.current = null;
@@ -335,48 +345,38 @@ function Board() {
     const draw = ({ nativeEvent }: any) => {
         if (selected[0]) return;
     
-        const { offsetX, offsetY } = nativeEvent;
+        const { clientX, clientY } = nativeEvent;
     
         if (lastPoint.current == null) return;
     
         if (selected[2]) {
-            eraseWithContinuousDots(offsetX, offsetY);
-            lastPoint.current = { x: offsetX, y: offsetY };
+            eraseWithContinuousDots(clientX, clientY);
+            lastPoint.current = { x: clientX, y: clientY };
         } else if (selected[1]) {
+            const newPoint = { x: (lastPoint.current.x + clientX) / 2, y: (lastPoint.current.y + clientY) / 2 };
+    
             socket?.emit("draw", {
-                offsetX,
-                offsetY,
-                lastPoint: lastPoint.current,
+                offsetX: clientX,
+                offsetY: clientY,
+                lastPoint: newPoint,
                 color: selectedColor,
                 strokeSize: selectedStroke,
-                room: currentRoom
+                room: currentRoom,
             });
-
+    
             contextRef.current?.quadraticCurveTo(
                 lastPoint.current.x,
                 lastPoint.current.y,
-                (lastPoint.current.x + offsetX) / 2,
-                (lastPoint.current.y + offsetY) / 2
+                newPoint.x,
+                newPoint.y
             );
             contextRef.current?.stroke();
-            
             contextRef.current?.beginPath();
-            contextRef.current?.moveTo((lastPoint.current?.x + offsetX) / 2, (lastPoint.current?.y + offsetY) / 2);
-            lastPoint.current = { x: offsetX, y: offsetY };
-            
-            const canvas = canvasRef.current;
-            if (canvas) {
-                const { width, height } = canvas.getBoundingClientRect();
-                if (offsetX > width || offsetY > height) {
-                    canvas.width = width * 2;
-                    canvas.height = height * 2;
-                    canvas.style.width = `${width}px`;
-                    canvas.style.height = `${height}px`;
-                    contextRef.current?.scale(2, 2);
-                }
-            }
+            contextRef.current?.moveTo(newPoint.x, newPoint.y);
+    
+            lastPoint.current = { x: clientX, y: clientY };
         }
-    };    
+    };  
 
     const handleButtonPress = (index: number) => {
         let newSelected = [false, false, false];
