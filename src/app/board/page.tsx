@@ -128,7 +128,7 @@ function Board() {
     ], []);
 
     useEffect(() => {
-        const socket = io(`https://notesy-socket.onrender.com:6969`)
+        const socket = io(`https://3.125.183.140:8000`)
 
         socket?.on("connect", () => {
             socket?.emit("join-room", { room: currentRoom })
