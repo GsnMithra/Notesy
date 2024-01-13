@@ -6,7 +6,23 @@ const io = new Server(server, {
     cors: {
         origin: '*',
         methods: ['GET', 'POST']
-    }
+    },
+    allowEIO3: true,
+    transports: ['websocket'],
+    allowUpgrades: false,
+    perMessageDeflate: false,
+    httpCompression: false,
+    handlePreflightRequest: (req, res) => {
+        res.writeHead(200, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET,POST',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Credentials': 'true',
+            'Cross-Origin-Embedder-Policy': 'require-corp',
+            'Cross-Origin-Opener-Policy': 'same-origin',
+        });
+        res.end();
+    },
 });
 
 io.on('connection', (socket) => {
@@ -27,8 +43,8 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 8000;
+const PORT = 6969;
 
 server.listen(PORT, () => {
-    console.log('running on port: 8000');
+    console.log(`running on port: ${PORT}`);
 })

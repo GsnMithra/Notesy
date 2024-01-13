@@ -7,9 +7,9 @@ import { auth } from "../firebase";
 
 import { Popover, PopoverTrigger, PopoverContent, Slider, Snippet, Tabs, Tab, Input, Spinner, User } from "@nextui-org/react";
 import {
-    Card, 
-    CardHeader, 
-    CardBody, 
+    Card,
+    CardHeader,
+    CardBody,
     Divider,
     Button
 } from "@nextui-org/react";
@@ -65,7 +65,7 @@ function Board() {
                 router.push("/")
             }
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const [darkMode, setDarkMode] = useState(theme === "dark" ? true : false)
@@ -78,7 +78,7 @@ function Board() {
     const [selectedStroke, setSelectedStroke] = useState(1 * 2)
     const [eraserRadius, setEraserRadius] = useState(20)
     const [dotted, setDotted] = useState(true)
-    const [eraserIndex, setEraserIndex] = useState({x: 0, y: 0})
+    const [eraserIndex, setEraserIndex] = useState({ x: 0, y: 0 })
     const [drawingHistory, setDrawingHistory] = useState<any[]>([])
     const [historyIndex, setHistoryIndex] = useState(-1)
     const [roomSize, setRoomSize] = useState(1)
@@ -89,12 +89,12 @@ function Board() {
     function generateRandomString(length: number = 7) {
         const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         let result = "";
-    
+
         for (let i = 0; i < length; i += 1) {
             const randomIndex = Math.floor(Math.random() * characters.length);
             result += characters.charAt(randomIndex);
         }
-      
+
         return result;
     }
 
@@ -128,7 +128,7 @@ function Board() {
     ], []);
 
     useEffect(() => {
-        const socket = io("http://localhost:8000")
+        const socket = io(`https://3.75.158.163:8000`)
 
         socket?.on("connect", () => {
             socket?.emit("join-room", { room: currentRoom })
@@ -163,7 +163,7 @@ function Board() {
         })
 
         setSocket(socket)
-        
+
         return () => {
             socket?.disconnect()
         }
@@ -172,59 +172,59 @@ function Board() {
     useEffect(() => {
         const initializeCanvas = () => {
             window.addEventListener('keydown', (e) => {
-                if (e.key === "Escape") 
+                if (e.key === "Escape")
                     setSelected([true, false, false])
                 else if (e.key === "p")
                     setSelected([false, true, false])
                 else if (e.key === "e")
                     setSelected([false, false, true])
             });
-    
+
             const canvas = canvasRef.current;
             if (canvas == null)
                 return;
-    
+
             canvas.width = window.innerWidth * 2;
             canvas.height = window.innerHeight * 2;
             canvas.style.width = `${window.innerWidth}px`;
             canvas.style.height = `${window.innerHeight}px`;
-    
+
             const context = canvas.getContext("2d");
             if (context == null)
                 return;
-            
+
             context.scale(2, 2);
             context.lineCap = "round";
             context.lineJoin = "round";
             context.lineWidth = 3;
             contextRef.current = context;
         };
-    
+
         const initializationTimeout = setTimeout(() => {
             initializeCanvas();
         }, 1000);
-    
+
         return () => clearTimeout(initializationTimeout);
-    }, [])    
+    }, [])
 
     useEffect(() => {
         window.addEventListener('mousemove', (e) => {
-            if (selected[2]) 
-                setEraserIndex({x: e.clientY, y: e.clientX})
+            if (selected[2])
+                setEraserIndex({ x: e.clientY, y: e.clientX })
         })
 
         return () => {
-            window.removeEventListener('mousemove', () => {})
+            window.removeEventListener('mousemove', () => { })
         }
     }, [selected])
 
     const eraserItems = (
         <PopoverContent className="ml-5 px-1 py-2 items-center justify-center w-32 p-3.5">
             <Slider
-                label="Radius:" 
-                step={10} 
-                maxValue={40} 
-                minValue={10} 
+                label="Radius:"
+                step={10}
+                maxValue={40}
+                minValue={10}
                 defaultValue={20}
                 className="max-w-md"
                 color="secondary"
@@ -242,30 +242,30 @@ function Board() {
                     <div className="inline-grid grid-cols-3 gap-2 pt-2">
                         {(theme === "dark" ? colorsLight : colorsDark).map((color, index) => (
                             <div key={index}>
-                            <div></div>
+                                <div></div>
                                 <Button
                                     isIconOnly
-                                    style={{backgroundColor: color}}
+                                    style={{ backgroundColor: color }}
                                     variant={selectedColor === color ? "faded" : undefined}
                                     onPress={() => handleColorChange(color)}
                                     color="secondary"
-                                    >
+                                >
                                 </Button>
                             </div>
                         ))}
                     </div>
-                    <Divider orientation="vertical" className="bg-auto invert h-30 m-3"/>
+                    <Divider orientation="vertical" className="bg-auto invert h-30 m-3" />
                     <div className="flex flex-col gap-[13.5px] pt-2">
                         {strokeWidth.map((value, index) => (
                             <div key={index}>
-                            <div></div>
+                                <div></div>
                                 <Button
                                     isIconOnly
                                     color="primary"
                                     onPress={() => handleStrokeChange(value * 2)}
                                     variant={selectedStroke === value * 2 ? "faded" : undefined}
-                                    >
-                                        <div className={`h-${0.5 * (index + 2)} w-6 bg-current rounded-xl`}></div>
+                                >
+                                    <div className={`h-${0.5 * (index + 2)} w-6 bg-current rounded-xl`}></div>
                                 </Button>
                             </div>
                         ))}
@@ -284,7 +284,7 @@ function Board() {
             const radians = (angle * Math.PI) / 180;
             const xPos = x + radius * Math.cos(radians);
             const yPos = y + radius * Math.sin(radians);
-    
+
             contextRef.current?.beginPath();
             contextRef.current?.arc(xPos, yPos, radius, 0, 2 * Math.PI);
             contextRef.current?.fill();
@@ -310,8 +310,8 @@ function Board() {
         setSelectedColor(color);
     }
 
-    const startDrawing = ({nativeEvent}: any) => {
-        const {offsetX, offsetY} = nativeEvent;
+    const startDrawing = ({ nativeEvent }: any) => {
+        const { offsetX, offsetY } = nativeEvent;
         if (selected[1]) {
             setIsDrawing(true)
             contextRef.current?.beginPath();
@@ -332,17 +332,26 @@ function Board() {
         lastPoint.current = null;
     }
 
-    const draw = ({nativeEvent}: any) => {
+    const draw = ({ nativeEvent }: any) => {
         if (selected[0]) return;
-
+    
         const { offsetX, offsetY } = nativeEvent;
-        
+    
         if (lastPoint.current == null) return;
-
+    
         if (selected[2]) {
             eraseWithContinuousDots(offsetX, offsetY);
             lastPoint.current = { x: offsetX, y: offsetY };
-        } else {
+        } else if (selected[1]) {
+            socket?.emit("draw", {
+                offsetX,
+                offsetY,
+                lastPoint: lastPoint.current,
+                color: selectedColor,
+                strokeSize: selectedStroke,
+                room: currentRoom
+            });
+
             contextRef.current?.quadraticCurveTo(
                 lastPoint.current.x,
                 lastPoint.current.y,
@@ -350,11 +359,11 @@ function Board() {
                 (lastPoint.current.y + offsetY) / 2
             );
             contextRef.current?.stroke();
-
+            
             contextRef.current?.beginPath();
             contextRef.current?.moveTo((lastPoint.current?.x + offsetX) / 2, (lastPoint.current?.y + offsetY) / 2);
             lastPoint.current = { x: offsetX, y: offsetY };
-
+            
             const canvas = canvasRef.current;
             if (canvas) {
                 const { width, height } = canvas.getBoundingClientRect();
@@ -366,17 +375,8 @@ function Board() {
                     contextRef.current?.scale(2, 2);
                 }
             }
-
-            socket?.emit("draw", {
-                offsetX,
-                offsetY,
-                lastPoint: lastPoint.current,
-                color: selectedColor,
-                strokeSize: selectedStroke,
-                room: currentRoom
-            })
         }
-    }
+    };    
 
     const handleButtonPress = (index: number) => {
         let newSelected = [false, false, false];
@@ -392,12 +392,12 @@ function Board() {
     };
 
     const undo = () => {
-        if (historyIndex > 0) 
+        if (historyIndex > 0)
             setHistoryIndex((prevIndex) => prevIndex - 1);
     };
 
     const redo = () => {
-        if (historyIndex < drawingHistory.length - 1) 
+        if (historyIndex < drawingHistory.length - 1)
             setHistoryIndex((prevIndex) => prevIndex + 1);
     };
 
@@ -417,9 +417,9 @@ function Board() {
                 } else if (action.type === 'erase') {
                     eraseWithContinuousDots(action.x, action.y);
                 }
-          });
+            });
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -433,7 +433,7 @@ function Board() {
                 eraserElement.style.left = updatedLeft;
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [eraserRadius])
 
     if (!user) {
@@ -452,7 +452,7 @@ function Board() {
                 avatarProps={{ src: avatar, alt: "" }}
             />
 
-            <Divider className="my-2 m-5"/>
+            <Divider className="my-2 m-5" />
             {/* Room size: {roomSize}
             {usernames?.map((username, index) => (
                 <div key={index}>{username}</div>
@@ -466,7 +466,7 @@ function Board() {
                 Sign Out
             </Button>
         </PopoverContent>
-      )
+    )
 
     return (
         <main className={`flex flex-row h-max w-max items-center justify-center p-0 ${dotted ? "bg-dotted" : ""}`}>
@@ -477,7 +477,7 @@ function Board() {
                         <AvatarFallback>{auth.currentUser?.email?.charAt(0)}</AvatarFallback>
                     </Avatar>
                 </PopoverTrigger>
-                    {AvatarContent}
+                {AvatarContent}
             </Popover>
             {selected[2] && (
                 <div className="absolute" style={{
@@ -486,12 +486,12 @@ function Board() {
                     left: `${eraserIndex.y - (eraserRadius * 4) / 2}px`,
                 }}>
                     <div style={{
-                            width: `${eraserRadius * 4}px`,
-                            height: `${eraserRadius * 4}px`,
-                            border: '1px solid bg-white',
-                            borderRadius: '50%',
-                            opacity: 0.2,
-                        }}
+                        width: `${eraserRadius * 4}px`,
+                        height: `${eraserRadius * 4}px`,
+                        border: '1px solid bg-white',
+                        borderRadius: '50%',
+                        opacity: 0.2,
+                    }}
                     ></div>
                 </div>
             )}
@@ -502,12 +502,12 @@ function Board() {
                             <CardBody>
                                 <Snippet>{currentRoom}</Snippet>
                             </CardBody>
-                        </Card>  
+                        </Card>
                     </Tab>
                     <Tab title="Join">
                         <Card className="absolute top-12 right-1 w-52">
                             <CardBody className="flex flex-row gap-3 items-center justify-center">
-                                <Input placeholder={"Paste room ID"} value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)}/>
+                                <Input placeholder={"Paste room ID"} value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)} />
                                 <Button isIconOnly color="primary" variant="flat" onPress={() => {
                                     if (newRoomId === "")
                                         return;
@@ -525,16 +525,16 @@ function Board() {
                         <p className="text-xl cursor-default">noʊtsi</p>
                     </div>
                 </CardHeader>
-                <Divider/>
+                <Divider />
                 <CardBody className="flex flex-col gap-3 items-center justify-center">
                     <Button isIconOnly aria-label="Pointer" color="primary" variant={!selected[0] ? "flat" : undefined} onPress={() => handleButtonPress(0)} className="relative w-14">
-                        <Image src={getModeItems("pointer", selected[0])} alt="Pointer" height={20}/>
+                        <Image src={getModeItems("pointer", selected[0])} alt="Pointer" height={20} />
                         <div className="absolute bottom-0.5 right-1 text-[8.5px]">Esc</div>
                     </Button>
                     <Popover placement="right-start" color="primary">
                         <PopoverTrigger onClick={() => handleButtonPress(1)}>
                             <Button isIconOnly aria-label="Pen" color="primary" variant={!selected[1] ? "flat" : undefined} className="relative w-14">
-                                <Image src={getModeItems("pen", selected[1])} alt="Pen" height={20}/>
+                                <Image src={getModeItems("pen", selected[1])} alt="Pen" height={20} />
                                 <div className="absolute bottom-0.5 right-2 text-[8.5px]">P</div>
                             </Button>
                         </PopoverTrigger>
@@ -543,7 +543,7 @@ function Board() {
                     <Popover placement="right-start" color="primary">
                         <PopoverTrigger onClick={() => handleButtonPress(2)}>
                             <Button isIconOnly aria-label="Eraser" color="primary" variant={!selected[2] ? "flat" : undefined} onPress={() => handleButtonPress(2)} className="relative w-14">
-                                <Image src={getModeItems("eraser", selected[2])} alt="Eraser" height={20}/>
+                                <Image src={getModeItems("eraser", selected[2])} alt="Eraser" height={20} />
                                 <div className="absolute bottom-0.5 right-2 text-[8.5px]">E</div>
                             </Button>
                         </PopoverTrigger>
@@ -553,10 +553,10 @@ function Board() {
             </Card>
             <div className="absolute bottom-5 left-5">
                 <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined} onClick={undo}>
-                    <Image src={theme === "light" ? Undo : UndoLight} alt="Undo" height={20}/>
+                    <Image src={theme === "light" ? Undo : UndoLight} alt="Undo" height={20} />
                 </Button>
                 <Button className="m-1" isIconOnly aria-label="Undo" color="primary" variant={dotted ? "flat" : undefined} onClick={redo}>
-                    <Image src={theme === "light" ? Redo : RedoLight} alt="Undo" height={20}/>
+                    <Image src={theme === "light" ? Redo : RedoLight} alt="Undo" height={20} />
                 </Button>
             </div>
             <canvas
