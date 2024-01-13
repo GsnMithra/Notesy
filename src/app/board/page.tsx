@@ -128,7 +128,7 @@ function Board() {
     ], []);
 
     useEffect(() => {
-        const socket = io("https://notesy-ws.vercel.app//:8000")
+        const socket = io("wss://righteous-zigzag-turnip.glitch.me")
 
         socket?.on("connect", () => {
             socket?.emit("join-room", { room: currentRoom })
@@ -146,8 +146,8 @@ function Board() {
                 (lastPoint.y + offsetY) / 2
             );
             contextRef.current?.stroke();
-
-            lastPoint.current = { x: offsetX, y: offsetY };
+            contextRef.current?.beginPath();
+            contextRef.current?.moveTo((lastPoint.current?.x + offsetX) / 2, (lastPoint.current?.y + offsetY) / 2);
 
             const canvas = canvasRef.current;
             if (canvas) {
