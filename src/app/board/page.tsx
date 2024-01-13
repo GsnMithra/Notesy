@@ -128,7 +128,7 @@ function Board() {
     ], []);
 
     useEffect(() => {
-        const socket = io("http://localhost:8000")
+        const socket = io("http://192.168.0.113:8000")
 
         socket?.on("connect", () => {
             socket?.emit("join-room", { room: currentRoom })
@@ -453,11 +453,11 @@ function Board() {
             />
 
             <Divider className="my-2 m-5"/>
-            Room size: {roomSize}
+            {/* Room size: {roomSize}
             {usernames?.map((username, index) => (
                 <div key={index}>{username}</div>
             ))}
-            <Divider className="my-2 m-5"/>
+            <Divider className="my-2 m-5"/> */}
 
             <Button
                 color="primary"

@@ -12,7 +12,7 @@ import {
 } from "@nextui-org/react";
 import Image from "next/image";
 
-import { auth, googleProvider, githubProvider, twitterProvider } from "./firebase";
+import { auth, googleProvider } from "./firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -300,8 +300,11 @@ export default function Home() {
           </CardBody>
           <Divider className="m-1 w-auto" />
           <CardFooter className="flex flex-row gap-3 items-center justify-center">
+            <div className="flex text-sm">
+              Sign in with 
+            </div>
             <Button
-              variant="flat"
+              // variant="flat"
               color="primary"
               isIconOnly
               style={{ height: "60px", width: "60px" }}
@@ -313,36 +316,6 @@ export default function Home() {
                 alt="Google"
                 height={35}
                 width={35}
-              />
-            </Button>
-            <Button
-              variant="flat"
-              color="primary"
-              isIconOnly
-              style={{ height: "60px", width: "60px" }}
-              className="flex items-center justify-center"
-              onPress={() => {providerSignIn(githubProvider)}}
-            >
-              <Image
-                src="https://authjs.dev/img/providers/github.svg"
-                alt="Github"
-                height={40}
-                width={40}
-              />
-            </Button>
-            <Button
-              variant="flat"
-              color="primary"
-              isIconOnly
-              style={{ height: "60px", width: "60px" }}
-              className="flex items-center justify-center"
-              onPress={() => {providerSignIn(twitterProvider)}}
-            >
-              <Image
-                src="https://authjs.dev/img/providers/twitter.svg"
-                alt="Twitter"
-                height={40}
-                width={40}
               />
             </Button>
           </CardFooter>
