@@ -255,7 +255,7 @@ function Board() {
         });
 
         return () => {
-            window.removeEventListener("mousemove", () => {});
+            window.removeEventListener("mousemove", () => { });
         };
     }, [selected]);
 
@@ -321,9 +321,8 @@ function Board() {
                                     }
                                 >
                                     <div
-                                        className={`h-${
-                                            0.5 * (index + 2)
-                                        } w-6 bg-current rounded-xl`}
+                                        className={`h-${0.5 * (index + 2)
+                                            } w-6 bg-current rounded-xl`}
                                     ></div>
                                 </Button>
                             </div>
@@ -493,9 +492,8 @@ function Board() {
     if (!user) {
         return (
             <main
-                className={`flex h-screen w-screen items-center justify-center ${
-                    dotted ? "bg-dotted" : ""
-                }`}
+                className={`flex h-screen w-screen items-center justify-center ${dotted ? "bg-dotted" : ""
+                    }`}
             >
                 <Spinner size="lg" />
             </main>
@@ -525,9 +523,8 @@ function Board() {
 
     return (
         <main
-            className={`flex flex-row h-max w-max items-center justify-center p-0 ${
-                dotted ? "bg-dotted" : ""
-            }`}
+            className={`flex flex-row h-max w-max items-center justify-center p-0 ${dotted ? "bg-dotted" : ""
+                }`}
         >
             <Popover placement="top-end">
                 <PopoverTrigger>
@@ -707,38 +704,9 @@ function Board() {
                     </Popover>
                 </CardBody>
             </Card>
-            <div className="absolute bottom-5 left-5">
-                <Button
-                    className="m-1"
-                    isIconOnly
-                    aria-label="Undo"
-                    color="primary"
-                    variant={dotted ? "flat" : undefined}
-                >
-                    <Image
-                        src={theme === "light" ? Undo : UndoLight}
-                        alt="Undo"
-                        height={20}
-                    />
-                </Button>
-                <Button
-                    className="m-1"
-                    isIconOnly
-                    aria-label="Undo"
-                    color="primary"
-                    variant={dotted ? "flat" : undefined}
-                >
-                    <Image
-                        src={theme === "light" ? Redo : RedoLight}
-                        alt="Undo"
-                        height={20}
-                    />
-                </Button>
-            </div>
             <canvas
-                className={`flex m-0 ${
-                    selected[1] || selected[2] ? "cursor-crosshair" : ""
-                }`}
+                className={`flex m-0 ${selected[1] || selected[2] ? "cursor-crosshair" : ""
+                    }`}
                 ref={canvasRef}
                 onMouseDown={startDrawing}
                 onMouseUp={finishDrawing}
