@@ -39,6 +39,6 @@ next-env.d.ts
 
 
 # firebase
-firebase.ts
+firebaseConfig.ts
 .firebase
 firebase-debug.log

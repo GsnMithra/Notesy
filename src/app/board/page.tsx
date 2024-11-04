@@ -145,9 +145,9 @@ function Board() {
     );
 
     useEffect(() => {
-        // const socket = io("wss://righteous-zigzag-turnip.glitch.me")
+        const socket = io("wss://righteous-zigzag-turnip.glitch.me")
 
-        const socket = io("ws://localhost:3001");
+        //const socket = io("ws://localhost:3001");
 
         socket?.on("connect", () => {
             socket?.emit("join-room", { room: currentRoom });
